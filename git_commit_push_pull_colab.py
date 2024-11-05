@@ -86,3 +86,4 @@ commit_and_push_changes(
     repo_folder="pass here the repository path",
     commit_message="Updated all files from Google Drive folder"
 )
+
