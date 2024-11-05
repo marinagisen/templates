@@ -1,0 +1,88 @@
+import os
+import shutil
+from google.colab import drive
+from git import Repo
+
+# Step 1: Mount Google Drive to access the stored SSH key
+drive.mount('/content/drive')
+
+# Step 2: Configure SSH access by copying the private key from Google Drive
+# Replace "pass here the SSH key path" with the actual path to your SSH key in Google Drive
+!mkdir -p ~/.ssh
+!cp "pass here the SSH key path" ~/.ssh/id_rsa
+!chmod 600 ~/.ssh/id_rsa
+
+# Add GitHub to known hosts to skip confirmation prompts
+!ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+# Step 3: Clone the repository or set it up for pulling and pushing
+# Replace "pass here the repository SSH URL" and "pass here the repository path" with your repository's details
+repo_url = "pass here the repository SSH URL"  # SSH URL of the repository (e.g., git@github.com:username/repo.git)
+repo_dir = "pass here the repository path"  # Path to where you want the repository in Colab (e.g., /content/repo)
+
+# Clone or pull the repository
+if os.path.isdir(repo_dir):
+    print("Repository already exists, pulling latest changes...")
+    repo = Repo(repo_dir)
+    repo.remotes.origin.pull()
+else:
+    print("Cloning the repository...")
+    repo = Repo.clone_from(repo_url, repo_dir)
+
+# Ensure the remote URL is set to SSH
+repo.remotes.origin.set_url(repo_url)
+
+print("Repository is up to date.")
+
+# Step 4: Function to copy files from Google Drive to the repository, then commit and push changes
+def commit_and_push_changes(google_drive_path, repo_folder, commit_message="Updated from Google Colab"):
+    """
+    Copies a specific file or all files from a specified Google Drive path to a Git repository folder,
+    then commits and pushes the changes to GitHub.
+
+    Parameters:
+    - google_drive_path (str): Path to a specific file or folder in Google Drive to sync
+    - repo_folder (str): Path to the local Git repository folder where files should be copied
+    - commit_message (str): Commit message for the changes
+    """
+    # Check if the path is a file or a directory
+    if os.path.isfile(google_drive_path):
+        # If it's a file, copy it directly to the repository
+        shutil.copy(google_drive_path, repo_folder)
+        print(f"Copied {os.path.basename(google_drive_path)} to the repository.")
+    elif os.path.isdir(google_drive_path):
+        # If it's a directory, copy all files in the folder
+        for filename in os.listdir(google_drive_path):
+            file_path = os.path.join(google_drive_path, filename)
+            if os.path.isfile(file_path):
+                shutil.copy(file_path, repo_folder)
+                print(f"Copied {filename} to the repository.")
+    else:
+        print(f"Path {google_drive_path} does not exist.")
+        return
+
+    # Commit and push changes to GitHub
+    try:
+        repo = Repo(repo_folder)  # Ensure the repo object is created in the right folder
+        repo.git.add(all=True)  # Stage all changes
+        repo.index.commit(commit_message)  # Commit changes
+        origin = repo.remote("origin")  # Use the correct remote
+        origin.push()  # Push to GitHub
+        print("Changes committed and pushed successfully.")
+    except Exception as e:
+        print(f"An error occurred while pushing changes: {e}")
+
+# Example usage:
+# For a single file
+commit_and_push_changes(
+    google_drive_path="pass here the specific file path in Google Drive",
+    repo_folder="pass here the repository path",
+    commit_message="Updated specific file from Google Drive"
+)
+
+# For an entire folder
+commit_and_push_changes(
+    google_drive_path="pass here the Google Drive folder path",
+    repo_folder="pass here the repository path",
+    commit_message="Updated all files from Google Drive folder"
+)
