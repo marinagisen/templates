@@ -6,7 +6,8 @@ from git import Repo
 # Step 1: Mount Google Drive to access the stored SSH key
 drive.mount('/content/drive')
 
-# Step 2: Configure SSH access by copying the private key from Google Drive
+# Step 2: Configure SSH access by copying the private key from Google Drive. Remove text makers and run
+
 # Replace "pass here the SSH key path" with the actual path to your SSH key in Google Drive
 !mkdir -p ~/.ssh
 !cp "pass here the SSH key path" ~/.ssh/id_rsa
@@ -14,6 +15,7 @@ drive.mount('/content/drive')
 
 # Add GitHub to known hosts to skip confirmation prompts
 !ssh-keyscan github.com >> ~/.ssh/known_hosts
+
 
 # Step 3: Clone the repository or set it up for pulling and pushing
 # Replace "pass here the repository SSH URL" and "pass here the repository path" with your repository's details
